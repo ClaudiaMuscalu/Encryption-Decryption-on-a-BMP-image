@@ -1,0 +1,174 @@
+#include <stdio.h>
+#include <stdlib.h>
+typedef struct { char B;
+                 char G;
+                 char R;}pixel;
+/* calculam latimea imaginii sursa*/
+   unsigned int latime_imagine  ( char * nume_fisiser_sursa)
+   {
+       FILE * fin;
+       unsigned int latime_imagine;
+       fin=fopen(nume_fisiser_sursa,"rb");
+       if(fin==NULL)
+       {
+           printf("Nu am gasit imaginea sursa din care citesc");
+           return -1 ;
+
+       }
+       fseek(fin,18,SEEK_SET);
+       fread(&latime_imagine,sizeof(unsigned int),1,fin);
+       fclose(fin);
+       return latime_imagine;
+
+
+   }
+
+/*calculam inaltimea imaginii sursa */
+   unsigned int inaltime_imagine  (char * nume_fisiser_sursa)
+   {
+       FILE * fin;
+       unsigned int inaltime_imagine;
+       fin=fopen(nume_fisiser_sursa,"rb");
+       if(fin==NULL)
+       {
+           printf("Nu am gasit imaginea sursa din care citesc");
+           return -1;
+
+       }
+       fseek(fin,22,SEEK_SET);
+       fread(&inaltime_imagine,sizeof(unsigned int),1,fin);
+       fclose(fin);
+       return inaltime_imagine;
+   }
+   /* salvam intr-un vector header ul imaginii sursa*/
+   void header_imagine_sursa ( char * nume_fisier_sursa, unsigned char **H)
+   {
+
+       FILE * fin;
+       fin=fopen(nume_fisier_sursa,"rb");
+       if(fin==NULL)
+       {
+           printf("Nu am gasit imaginea sursa din care citesc");
+           return ;
+       }
+
+       (*H)=(unsigned char *)malloc(54*sizeof(unsigned char ));
+       if((*H)==NULL)
+       {
+           printf("Nu s-a putut aloca memoriei pentru construirea vectorului ce salveaza header-ul");
+           return ;
+       }
+       int i;
+       for(i=0;i<54;i++)
+       {
+           fread(&(*H)[i],sizeof(unsigned char),1,fin);
+
+       }
+       fclose(fin);
+
+   }
+   /* liniarizam imaginea sursa */
+   void liniarizare_imagine (char * nume_fiser_sursa, pixel **L)
+   {
+       FILE *fin;
+       unsigned int H_imagine,W_imagine;
+       fin=fopen(nume_fiser_sursa,"rb");
+       if(fin==NULL)
+       {
+           printf("Nu am gasit imaginea sursa din care citesc");
+           return ;
+       }
+       H_imagine=inaltime_imagine(nume_fiser_sursa);
+       W_imagine=latime_imagine(nume_fiser_sursa);
+       if(H_imagine==0||W_imagine==0)
+       {
+           printf("Eroare la deschiderea fisierului sursa la calculul inaltimii sau latimii");
+           return ;
+
+
+       }
+       unsigned int k;
+       k=H_imagine*W_imagine;//lungimea vectorului creat
+       printf("\n %u %u %u",H_imagine,W_imagine,k);//verific daca inaltimea si latimea sunt bune
+
+
+       fseek(fin,54,SEEK_SET);
+       int i,j;
+       pixel x;
+       *L=(pixel *)malloc(H_imagine*W_imagine*sizeof(pixel));
+       if((*L)==NULL)
+       {
+           printf("Nu s-a putut aloca memorie pentru vectorul de liniarizare");
+           return ;
+       }
+       int padding;
+
+       if(W_imagine%4!=0)
+        padding=4-(3*W_imagine)%4;
+       else
+        padding=0;
+
+
+       for(i=H_imagine-1;i>=0;i--)
+
+       {
+           for(j=0;j<W_imagine;j++)
+           {
+            //citesc fiecare pixel din imaginea sursa
+            fread(&x.B, 1,1,fin);
+            fread(&x.G, 1,1,fin);
+            fread(&x.R, 1,1,fin)
+            (*L)[W_imagine*i+j]=x;
+           }
+           fseek(fin,padding,SEEK_CUR);
+       }
+
+
+
+
+   }
+   void creare_imagine ( char *nume_fisier_sursa,char * nume_fisier_destinatie, unsigned char  *H, pixel *L )
+   {
+       FILE *fin,*fout;
+       fin=fopen(nume_fisier_sursa,"rb");
+       fout=fopen(nume_fisier_destinatie,"wb");
+       int i,h;
+       unsigned char x;
+       h=0;
+
+
+       for(i=0;i<54;i++)
+        fwrite(&H[i],sizeof(unsigned char),1,fout);
+       fseek(fin,54,SEEK_SET);
+       while(fread(&x,1,1,fin)==1)
+        fwrite(&x,1,1,fout);
+
+   }
+
+   /* liniarizam imaginea sursa */
+
+
+int main()
+{     char nume_imagine_sursa[  ]="peppersinitial.bmp";
+      char nume_imagine_liniarizata[ ]="peppersliniarizat.bmp";
+      printf("Latimea imaginii (W) sursa este: %u\n",latime_imagine(nume_imagine_sursa));
+      printf("Inaltimea imaginii (H) sursa este: %u\n ",inaltime_imagine(nume_imagine_sursa));
+      pixel *L;
+
+      unsigned char *H;
+      header_imagine_sursa(nume_imagine_sursa,&H);
+      printf("Verficare headerului :\n");
+
+      int i;
+      for(i=0;i<54;i++)
+        printf("%u ",H[i]);
+       printf("\nVerficare headerului :\n");
+
+       liniarizare_imagine(nume_imagine_sursa,&L);
+       printf("%u",L[0].B);
+       creare_imagine(nume_imagine_sursa,nume_imagine_liniarizata,H,L);
+       for(i=0;i<20;i++)
+        printf("%u %u ")
+
+    return 0;
+}
