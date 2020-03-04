@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1546864287 source:c:\users\claudia\desktop\pp_criptografie\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
